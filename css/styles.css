@@ -1,0 +1,155 @@
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap');
+/* Estilos generales */
+body {
+    font-family: 'Roboto', sans-serif;
+    background-color: #F8FAFF;
+    color: #213456;
+    margin: 0;
+}
+
+/* Barra de navegación */
+.navbar {
+    background-color: #FFFFFF;
+}
+
+.navbar-brand {
+    font-size: 32px;
+    font-weight: bold;
+    color: #213456;
+}
+
+.nav-link {
+    font-size: 20px;
+    color: #213456;
+}
+
+/* Títulos y textos */
+h1 {
+    font-size: 32px;
+    font-weight: bold;
+}
+
+h2 {
+    font-size: 20px;
+    font-weight: bold;
+}
+
+p {
+    font-size: 20px;
+}
+
+/* Dashboard */
+.tarjeta-intercambio {
+    border-radius: 8px;
+    padding: 14px;
+    font-size: 20px;
+}
+
+.tarjeta-intercambio h3 {
+    font-size: 20px;
+    font-weight: bold;
+}
+
+.tarjeta-intercambio p {
+    font-size: 20px;
+}
+
+.tarjeta-oferta {
+    background-color: #DCEBFF;
+}
+
+.tarjeta-peticion {
+    background-color: #DDF3E5;
+}
+
+/* Login */
+.contenedor-login {
+    background-color: #FFFFFF;
+    padding: 40px;
+}
+
+.contenedor-login label {
+    font-size: 20px;
+    font-weight: bold;
+}
+
+.contenedor-login input {
+    border: 2px solid #D1D5DB;
+    border-radius: 8px;
+}
+
+.boton-login {
+    background-color: #213456;
+    color: #FFFFFF;
+    font-size: 20px;
+    font-weight: bold;
+    border: none;
+    border-radius: 8px;
+    padding: 12px;
+}
+
+.boton-login:hover {
+    background-color: #172642;
+    color: #FFFFFF;
+}
+
+/* Usuarios */
+
+.boton-alta,
+.boton-borrar {
+    background-color: #213456;
+    color: #FFFFFF;
+    font-size: 20px;
+    font-weight: bold;
+    border: none;
+    border-radius: 8px;
+    padding: 12px;
+}
+
+.boton-alta:hover,
+.boton-borrar:hover {
+    background-color: #172642;
+    color: #FFFFFF;
+}
+
+.boton-borrar {
+    font-size: 16px;
+    padding: 6px 12px;
+}
+
+.tabla-usuarios {
+    font-size: 16px;
+    --bs-table-bg: #F8FAFF;
+    --bs-table-color: #213456;
+}
+
+.tabla-usuarios th {
+    color: #213456;
+    font-weight: bold;
+}
+
+.tabla-usuarios td {
+    vertical-align: middle;
+}
+
+/* Animación de las tarjetas */
+.tarjeta-intercambio {
+    animation: aparecer 0.5s ease;
+    transition: transform 0.2s ease;
+}
+
+.tarjeta-intercambio:hover {
+    transform: translateY(-5px);
+}
+
+@keyframes aparecer {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}

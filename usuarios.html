@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StackForge - Gestión de usuarios</title>
+
+    <!-- Bootstrap -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Estilos propios -->
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+<!-- Barra de navegación -->
+<nav class="navbar navbar-expand-lg">
+    <div class="container">
+        <a class="navbar-brand" href="index.html">StackForge</a>
+
+        <button class="navbar-toggler" type="button"
+                data-bs-toggle="collapse"
+                data-bs-target="#menuNavegacion"
+                aria-controls="menuNavegacion"
+                aria-expanded="false"
+                aria-label="Abrir menú">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <div class="collapse navbar-collapse" id="menuNavegacion">
+            <ul class="navbar-nav">
+                <li class="nav-item">
+                    <a class="nav-link" href="index.html">Inicio</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="usuarios.html">Usuarios</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="intercambios.html">Intercambios</a>
+                </li>
+            </ul>
+
+            <ul class="navbar-nav ms-auto">
+                <li class="nav-item">
+                    <a class="nav-link" href="login.html" id="enlace-login">Iniciar sesión</a>
+                </li>
+                <li class="nav-item">
+                    <button type="button" class="nav-link" id="cerrar-sesion" hidden>
+                        Cerrar sesión
+                    </button>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+    <main class="container mt-5">
+
+        <h1 class="text-center mb-5">
+            Gestión de usuarios
+        </h1>
+
+        <div class="row">
+
+            <!-- Columna izquierda: formulario -->
+            <section class="col-lg-5">
+                <h2 class="mb-4">Alta de usuarios</h2>
+
+                <form id="formUsuario">
+
+                    <div class="mb-3">
+                        <label for="nombre" class="form-label">Nombre</label>
+                        <input type="text" class="form-control"
+                            id="nombre" name="nombre" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="email" class="form-label">Email</label>
+                        <input type="email" class="form-control"
+                            id="email" name="email" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="password" class="form-label">Contraseña</label>
+                        <input type="password" class="form-control"
+                            id="password" name="password" required>
+                    </div>
+
+                    <button type="submit" class="btn boton-alta">
+                    Dar de alta
+                    </button>
+
+                </form>
+            </section>
+
+            <!-- Columna derecha: tabla -->
+
+            <section class="col-lg-7 mt-4 mt-lg-0">
+                <h2 class="mb-4">Consulta y borrado de usuarios</h2>
+
+                <div class="table-responsive">
+                    <table class="table tabla-usuarios">
+                        <thead>
+                            <tr>
+                                <th>Nombre</th>
+                                <th>Email</th>
+                                <th>Contraseña</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+
+                        <tbody id="tablaUsuarios">
+                            <!-- Los usuarios se añadirán con JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+
+        </div>
+
+    </main>
+
+<!-- Bootstrap JavaScript -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+<!-- JavaScript de Usuarios -->
+<script type="module" src="js/usuarios.js"></script>
+
+</body>
+</html>
