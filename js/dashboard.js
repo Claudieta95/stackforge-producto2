@@ -1,61 +1,165 @@
-import { intercambios, usuarios } from "./datos.js";
+"use strict";
 
-const contenedor = document.getElementById("lista-intercambios");
+import {
+    obtenerIntercambios,
+    obtenerSelecciones,
+    guardarSeleccion,
+    eliminarSeleccion,
+    obtenerUsuarioActivo,
+    cerrarSesion
+} from "./almacenaje.js";
 
-intercambios.forEach(function(intercambio) {
+const disponibles = document.getElementById("lista-intercambios");
+const seleccionados = document.getElementById("lista-seleccionados");
+const mensaje = document.getElementById("mensaje-dashboard");
 
-    // Buscar el usuario que ha publicado el intercambio
-    const usuario = usuarios.find(function(u) {
-        return u.id === intercambio.usuarioId;
-    });
-
-    // Elegir el color según el tipo de intercambio
-    const tipoTarjeta = intercambio.tipo === "oferta"
-        ? "tarjeta-oferta"
-        : "tarjeta-peticion";
-
-    const nombreTipo = intercambio.tipo === "oferta"
-        ? "Oferta de idioma"
-        : "Petición de idioma";
-
-    // Mostrar la fecha en formato día/mes/año
-    const partesFecha = intercambio.fecha.split("-");
-    const fecha = partesFecha[2] + "/" + partesFecha[1] + "/" + partesFecha[0];
-
-    // Crear la tarjeta
-    const columna = document.createElement("div");
-    columna.className = "col-12 col-md-6";
-
-    columna.innerHTML = `
-        <div class="tarjeta-intercambio ${tipoTarjeta} h-100">
-            <h3>${nombreTipo}</h3>
-            <p>Título: ${intercambio.titulo}</p>
-            <p>Fecha: ${fecha}</p>
-            <p>${intercambio.idiomaOfrecido} → ${intercambio.idiomaSolicitado}</p>
-            <p>Modalidad: ${intercambio.modalidad}</p>
-            <p>Usuario: ${usuario ? usuario.nombre : "Desconocido"}</p>
-            <p>Descripción: ${intercambio.descripcion}</p>
-        </div>
-    `;
-
-    contenedor.appendChild(columna);
-});
-
-// Mostrar el usuario que ha iniciado sesión
+const usuarioActivo = document.getElementById("usuarioActivo");
 const enlaceLogin = document.getElementById("enlace-login");
 const botonCerrar = document.getElementById("cerrar-sesion");
 
-const usuarioEmail = sessionStorage.getItem("usuarioEmail");
+let intercambios = [];
+let selecciones = [];
 
-if (usuarioEmail) {
-    enlaceLogin.textContent = usuarioEmail;
-    botonCerrar.hidden = false;
+// Mostrar el usuario activo
+function mostrarUsuarioActivo() {
+    const usuario = obtenerUsuarioActivo();
+
+    usuarioActivo.textContent = usuario ? usuario.nombre : "-no login-";
+    enlaceLogin.hidden = Boolean(usuario);
+    botonCerrar.hidden = !usuario;
 }
 
 // Cerrar sesión
 botonCerrar.addEventListener("click", function() {
-    sessionStorage.removeItem("usuarioEmail");
-
-    enlaceLogin.textContent = "Iniciar sesión";
-    botonCerrar.hidden = true;
+    cerrarSesion();
+    mostrarUsuarioActivo();
 });
+
+// Crear una tarjeta
+function crearTarjeta(intercambio) {
+    const columna = document.createElement("div");
+    columna.className = "col-12";
+
+    const tarjeta = document.createElement("div");
+    tarjeta.className = "tarjeta-intercambio h-100";
+
+    const esOferta = intercambio.tipo === "Ofrezco idioma";
+
+    tarjeta.classList.add(
+        esOferta ? "tarjeta-oferta" : "tarjeta-peticion"
+    );
+
+    tarjeta.draggable = true;
+
+    const titulo = document.createElement("h3");
+    titulo.textContent = intercambio.tipo;
+
+    const nombre = document.createElement("p");
+    nombre.textContent = "Título: " + intercambio.titulo;
+
+    const fecha = document.createElement("p");
+    const partesFecha = intercambio.fecha.split("-");
+    fecha.textContent = "Fecha: " +
+        partesFecha[2] + "/" + partesFecha[1] + "/" + partesFecha[0];
+
+    const email = document.createElement("p");
+    email.textContent = "Email: " + intercambio.email;
+
+    const descripcion = document.createElement("p");
+    descripcion.textContent = "Descripción: " + intercambio.descripcion;
+
+    tarjeta.append(titulo, nombre, fecha, email, descripcion);
+
+    tarjeta.addEventListener("dragstart", function(evento) {
+        evento.dataTransfer.setData(
+            "text/plain",
+            String(intercambio.id)
+        );
+    });
+
+    columna.appendChild(tarjeta);
+    return columna;
+}
+
+// Mostrar disponibles y seleccionados
+function mostrarIntercambios() {
+    disponibles.innerHTML = "";
+    seleccionados.innerHTML = "";
+
+    intercambios.forEach(function(intercambio) {
+        const tarjeta = crearTarjeta(intercambio);
+
+        if (selecciones.includes(intercambio.id)) {
+            seleccionados.appendChild(tarjeta);
+        } else {
+            disponibles.appendChild(tarjeta);
+        }
+    });
+}
+
+// Permitir arrastrar tarjetas entre las dos zonas
+function prepararZona(contenedor, seleccionar) {
+    contenedor.addEventListener("dragover", function(evento) {
+        evento.preventDefault();
+    });
+
+    contenedor.addEventListener("drop", async function(evento) {
+        evento.preventDefault();
+
+        const id = Number(
+            evento.dataTransfer.getData("text/plain")
+        );
+
+        if (!intercambios.some(intercambio => intercambio.id === id)) {
+            return;
+        }
+
+        try {
+            if (seleccionar) {
+                await guardarSeleccion(id);
+
+                if (!selecciones.includes(id)) {
+                    selecciones.push(id);
+                }
+            } else {
+                await eliminarSeleccion(id);
+                selecciones = selecciones.filter(
+                    seleccionado => seleccionado !== id
+                );
+            }
+
+            mostrarIntercambios();
+            mensaje.textContent = "Selección guardada.";
+
+        } catch (error) {
+            console.error(error);
+            mensaje.textContent = "Error al guardar la selección.";
+        }
+    });
+}
+
+// Cargar los datos de IndexedDB
+async function iniciarDashboard() {
+    mostrarUsuarioActivo();
+
+    prepararZona(disponibles, false);
+    prepararZona(seleccionados, true);
+
+    try {
+        intercambios = await obtenerIntercambios();
+
+        const datosGuardados = await obtenerSelecciones();
+
+        selecciones = datosGuardados.map(
+            seleccion => seleccion.idIntercambio
+        );
+
+        mostrarIntercambios();
+
+    } catch (error) {
+        console.error(error);
+        mensaje.textContent = "Error al cargar los intercambios.";
+    }
+}
+
+iniciarDashboard();
