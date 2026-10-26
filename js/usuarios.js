@@ -1,10 +1,37 @@
-import { usuarios } from "./datos.js";
+import {
+    obtenerUsuarios,
+    guardarUsuario,
+    eliminarUsuario,
+    obtenerUsuarioActivo,
+    cerrarSesion
+} from "./almacenaje.js";
 
 const tablaUsuarios = document.getElementById("tablaUsuarios");
 const formUsuario = document.getElementById("formUsuario");
 
+// Mostrar el usuario que ha iniciado sesión
+function mostrarUsuarioActivo() {
+    const usuario = obtenerUsuarioActivo();
+
+    const elemento = document.getElementById("usuarioActivo");
+    const enlaceLogin = document.getElementById("enlace-login");
+    const botonCerrarSesion = document.getElementById("cerrar-sesion");
+
+    if (usuario) {
+        elemento.textContent = usuario.nombre;
+        enlaceLogin.hidden = true;
+        botonCerrarSesion.hidden = false;
+    } else {
+        elemento.textContent = "-no login-";
+        enlaceLogin.hidden = false;
+        botonCerrarSesion.hidden = true;
+    }
+}
+
 function mostrarUsuarios() {
     tablaUsuarios.innerHTML = "";
+
+    const usuarios = obtenerUsuarios();
 
     usuarios.forEach(function(usuario) {
         const fila = document.createElement("tr");
@@ -25,22 +52,18 @@ function mostrarUsuarios() {
 
         // Añadir el evento click
         botonBorrar.addEventListener("click", function() {
-            const indice = usuarios.findIndex(function(u) {
-                return u.id === usuario.id;
-            });
-
-            if (indice !== -1) {
-                usuarios.splice(indice, 1);
-                mostrarUsuarios();
-            }
+            eliminarUsuario(usuario.email);
+            mostrarUsuarios();
+            mostrarUsuarioActivo();
         });
 
-        // Añadir la fila a la tabla
-        tablaUsuarios.appendChild(fila);
-    });
-}
+            // Añadir la fila a la tabla
+            tablaUsuarios.appendChild(fila);
+            });
+        }
 
 mostrarUsuarios();
+mostrarUsuarioActivo();
 
 formUsuario.addEventListener("submit", function(event) {
     event.preventDefault();
@@ -49,19 +72,27 @@ formUsuario.addEventListener("submit", function(event) {
     const email = document.getElementById("email").value;
     const password = document.getElementById("password").value;
 
-    console.log(nombre, email, password);
-
     const nuevoUsuario = {
-    id: Math.max(0, ...usuarios.map(u => u.id)) + 1,
-    nombre: nombre,
-    email: email,
-    password: password
-};
+        nombre: nombre,
+        email: email,
+        password: password
+    };
 
-usuarios.push(nuevoUsuario);
+    try {
+        guardarUsuario(nuevoUsuario);
 
-mostrarUsuarios();
+        mostrarUsuarios();
+        formUsuario.reset();
 
-formUsuario.reset();
+        alert("Usuario registrado correctamente.");
 
+    } catch (error) {
+        alert(error.message);
+    }
+});
+
+    // Cerrar sesión
+    document.getElementById("cerrar-sesion").addEventListener("click", function() {
+        cerrarSesion();
+        mostrarUsuarioActivo();
 });
