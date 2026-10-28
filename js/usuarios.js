@@ -92,10 +92,10 @@ function mostrarUsuarios() {
         mensajeUsuario.className = `alert alert-${tipo}`;
     }
 
-mostrarUsuarios();
-mostrarUsuarioActivo();
+    mostrarUsuarios();
+    mostrarUsuarioActivo();
 
-formUsuario.addEventListener("submit", function(event) {
+    formUsuario.addEventListener("submit", function(event) {
     event.preventDefault();
 
     const nombre = document.getElementById("nombre").value;
