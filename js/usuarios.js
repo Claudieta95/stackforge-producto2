@@ -1,67 +1,128 @@
-import { usuarios } from "./datos.js";
+import {
+    obtenerUsuarios,
+    guardarUsuario,
+    eliminarUsuario,
+    obtenerUsuarioActivo,
+    cerrarSesion
+} from "./almacenaje.js";
 
 const tablaUsuarios = document.getElementById("tablaUsuarios");
 const formUsuario = document.getElementById("formUsuario");
+const mensajeUsuario = document.getElementById("mensajeUsuario");
+
+// Mostrar el usuario que ha iniciado sesión
+function mostrarUsuarioActivo() {
+    const usuario = obtenerUsuarioActivo();
+
+    const elemento = document.getElementById("usuarioActivo");
+    const enlaceLogin = document.getElementById("enlace-login");
+    const botonCerrarSesion = document.getElementById("cerrar-sesion");
+
+    if (usuario) {
+        elemento.textContent = usuario.nombre;
+        enlaceLogin.hidden = true;
+        botonCerrarSesion.hidden = false;
+    } else {
+        elemento.textContent = "-no login-";
+        enlaceLogin.hidden = false;
+        botonCerrarSesion.hidden = true;
+    }
+}
 
 function mostrarUsuarios() {
     tablaUsuarios.innerHTML = "";
 
+    const usuarios = obtenerUsuarios();
+
     usuarios.forEach(function(usuario) {
         const fila = document.createElement("tr");
 
-        fila.innerHTML = `
-            <td>${usuario.nombre}</td>
-            <td>${usuario.email}</td>
-            <td>${usuario.password}</td>
-            <td>
-                <button type="button" class="btn boton-borrar">
-                Borrar
-                </button>
-            </td>
-        `;
+        // Crear las celdas de la tabla
+        const celdaNombre = document.createElement("td");
+        celdaNombre.textContent = usuario.nombre;
 
-        // Encontrar el botón de esta fila
-        const botonBorrar = fila.querySelector(".boton-borrar");
+        const celdaEmail = document.createElement("td");
+        celdaEmail.textContent = usuario.email;
+
+        const celdaPassword = document.createElement("td");
+        celdaPassword.textContent = usuario.password;
+
+        const celdaAcciones = document.createElement("td");
+
+        // Crear el botón de borrar
+        const botonBorrar = document.createElement("button");
+        botonBorrar.type = "button";
+        botonBorrar.className = "btn boton-borrar";
+        botonBorrar.textContent = "Borrar";
+
+        // Añadir el botón a la celda
+        celdaAcciones.appendChild(botonBorrar);
+
+        // Añadir las celdas a la fila
+        fila.appendChild(celdaNombre);
+        fila.appendChild(celdaEmail);
+        fila.appendChild(celdaPassword);
+        fila.appendChild(celdaAcciones);
 
         // Añadir el evento click
         botonBorrar.addEventListener("click", function() {
-            const indice = usuarios.findIndex(function(u) {
-                return u.id === usuario.id;
-            });
 
-            if (indice !== -1) {
-                usuarios.splice(indice, 1);
-                mostrarUsuarios();
-            }
-        });
+        const confirmar = confirm(
+            `¿Estás seguro de que quieres eliminar a ${usuario.nombre}?`
+        );
 
-        // Añadir la fila a la tabla
-        tablaUsuarios.appendChild(fila);
+        if (confirmar) {
+            eliminarUsuario(usuario.email);
+            mostrarUsuarios();
+            mostrarUsuarioActivo();
+
+            mostrarMensaje("Usuario eliminado correctamente.", "success");
+        }
     });
-}
 
-mostrarUsuarios();
+            // Añadir la fila a la tabla
+            tablaUsuarios.appendChild(fila);
+            });
+        }
 
-formUsuario.addEventListener("submit", function(event) {
+    // Mostrar mensajes de éxito o error
+    function mostrarMensaje(texto, tipo) {
+        mensajeUsuario.textContent = texto;
+
+        mensajeUsuario.className = `alert alert-${tipo}`;
+    }
+
+    mostrarUsuarios();
+    mostrarUsuarioActivo();
+
+    formUsuario.addEventListener("submit", function(event) {
     event.preventDefault();
 
     const nombre = document.getElementById("nombre").value;
     const email = document.getElementById("email").value;
     const password = document.getElementById("password").value;
 
-    console.log(nombre, email, password);
-
     const nuevoUsuario = {
-    id: Math.max(0, ...usuarios.map(u => u.id)) + 1,
-    nombre: nombre,
-    email: email,
-    password: password
-};
+        nombre: nombre,
+        email: email,
+        password: password
+    };
 
-usuarios.push(nuevoUsuario);
+    try {
+        guardarUsuario(nuevoUsuario);
 
-mostrarUsuarios();
+        mostrarUsuarios();
+        formUsuario.reset();
 
-formUsuario.reset();
+        mostrarMensaje("Usuario registrado correctamente.", "success");
 
+    } catch (error) {
+        mostrarMensaje(error.message, "danger");
+    }
+});
+
+    // Cerrar sesión
+    document.getElementById("cerrar-sesion").addEventListener("click", function() {
+        cerrarSesion();
+        mostrarUsuarioActivo();
 });
