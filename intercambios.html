@@ -14,9 +14,9 @@
 <body>
 
 <!-- Barra de navegación común -->
-<nav class="navbar navbar-expand-lg">
+<nav class="navbar navbar-expand-lg border-bottom">
     <div class="container">
-        <a class="navbar-brand" href="index.html">StackForge</a>
+        <a class="navbar-brand fw-bold" href="index.html">StackForge</a>
 
         <button class="navbar-toggler" type="button"
                 data-bs-toggle="collapse"
@@ -28,28 +28,21 @@
         </button>
 
         <div class="collapse navbar-collapse" id="menuNavegacion">
-            <ul class="navbar-nav">
+            <ul class="navbar-nav me-auto">
                 <li class="nav-item">
-                    <a class="nav-link" href="index.html">Inicio</a>
+                    <a class="nav-link" href="index.html">Dashboard</a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" href="usuarios.html">Usuarios</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link active" href="intercambios.html">Intercambios</a>
+                    <a class="nav-link active fw-bold" href="intercambios.html">Intercambios</a>
                 </li>
             </ul>
 
-            <ul class="navbar-nav ms-auto">
-                <li class="nav-item">
-                    <a class="nav-link" href="login.html" id="enlace-login">Iniciar sesión</a>
-                </li>
-                <li class="nav-item">
-                    <button type="button" class="nav-link" id="cerrar-sesion" hidden>
-                        Cerrar sesión
-                    </button>
-                </li>
-            </ul>
+            <span class="navbar-text fw-semibold text-secondary">
+                Usuario activo: <span id="usuarioActivo" class="text-dark">-no login-</span>
+            </span>
         </div>
     </div>
 </nav>
@@ -60,52 +53,73 @@
 
     <div class="row g-5">
         
-        <!-- COLUMNA IZQUIERDA: Formulario de Alta (Responsive: col-12 col-lg-5) -->
+        <!-- COLUMNA IZQUIERDA: Formulario de Alta e Indicador Gráfico Canvas -->
         <section class="col-12 col-lg-5">
             <div class="contenedor-login shadow-sm rounded p-4 bg-white">
                 <h2 class="fs-4 fw-bold mb-4">Alta de intercambios</h2>
                 
-                <form id="mi-formulario">
+                <form id="form-intercambio">
                     <div class="mb-3">
-                        <label for="input-titulo" class="form-label">Título</label>
+                        <label for="input-titulo" class="form-label fw-semibold">Título</label>
                         <input type="text" id="input-titulo" class="form-control" placeholder="Ej. Intercambio inglés/español" required>
                     </div>
 
                     <div class="mb-3">
-                        <label for="input-fecha" class="form-label">Fecha</label>
+                        <label for="input-email" class="form-label fw-semibold">Correo electrónico</label>
+                        <input type="email" id="input-email" class="form-control" placeholder="nombre@correo.com" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="input-fecha" class="form-label fw-semibold">Fecha</label>
                         <input type="date" id="input-fecha" class="form-control" required>
                     </div>
 
                     <div class="mb-3">
-                        <label for="input-modalidad" class="form-label">Modalidad</label>
-                        <input type="text" id="input-modalidad" class="form-control" placeholder="Ej. Presencial u Online" required>
-                    </div>
-
-                    <div class="mb-3">
-                        <label for="textarea-descripcion" class="form-label">Descripción</label>
+                        <label for="textarea-descripcion" class="form-label fw-semibold">Descripción</label>
                         <textarea id="textarea-descripcion" class="form-control" rows="3" placeholder="Ofrezco practicar..." required></textarea>
                     </div>
 
                     <div class="mb-4">
-                        <label for="select-tipo" class="form-label">Tipo</label>
+                        <label for="select-tipo" class="form-label fw-semibold">Tipo</label>
                         <select id="select-tipo" class="form-select" required>
-                            <option value="oferta">Oferta</option>
-                            <option value="peticion">Petición</option>
+                            <option value="Ofrezco idioma">Ofrezco idioma</option>
+                            <option value="Busco idioma">Busco idioma</option>
                         </select>
                     </div>
 
                     <button type="submit" class="boton-alta w-100 py-2">Dar de alta</button>
                 </form>
             </div>
+
+            <!-- Canvas Nativo para Estadísticas Requeridas -->
+            <div class="shadow-sm rounded p-3 bg-white mt-4 text-center">
+                <h3 class="fs-6 fw-bold mb-3 text-secondary text-uppercase">Mapeado de Intercambios</h3>
+                <canvas id="grafico-intercambios" width="240" height="160" class="mx-auto"></canvas>
+            </div>
         </section>
 
-        <!-- COLUMNA DERECHA: Consulta y Borrado Dinámico (Responsive: col-12 col-lg-7) -->
+        <!-- COLUMNA DERECHA: Tabla de Consulta y Borrado Síncrono (IndexedDB) -->
         <section class="col-12 col-lg-7">
-            <h2 class="fs-4 fw-bold mb-4">Consulta y borrado de intercambios</h2>
-            
-            <!-- Contenedor responsive con las clases nativas row y g-4 de tu aplicación -->
-            <div id="lista-intercambios" class="row g-4">
-                <!-- Las tarjetas dinámicas se inyectarán aquí mediante js/intercambios.js -->
+            <div class="shadow-sm rounded p-4 bg-white h-100">
+                <h2 class="fs-4 fw-bold mb-4">Consulta y borrado de intercambios</h2>
+                
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Título</th>
+                                <th>Email</th>
+                                <th>Fecha</th>
+                                <th>Descripción</th>
+                                <th>Tipo</th>
+                                <th class="text-center">Acción</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabla-intercambios-cuerpo">
+                            <!-- Inyección dinámica mediante JS -->
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </section>
 
@@ -115,7 +129,7 @@
 <!-- Bootstrap JavaScript -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
-<!-- Script específico JavaScript para la gestión de intercambios (Persona 3) -->
+<!-- Script de Gestión de Intercambios (Persona 3) -->
 <script type="module" src="js/intercambios.js"></script>
 
 </body>

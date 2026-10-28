@@ -1,118 +1,157 @@
-import { intercambios, usuarios } from "./datos.js";
+// Importamos los métodos del módulo centralizado del Producto 2 de tu equipo
+import { guardarIntercambio, obtenerIntercambios, eliminarIntercambio, obtenerUsuarioActivo } from "./almacenaje.js";
 
 // ========================================================
-// 1. MOSTRAR DINÁMICAMENTE TODOS LOS INTERCAMBIOS EXISTENTES
+// 1. CONSULTA Y RENDERIZACIÓN DINÁMICA DE LA TABLA
 // ========================================================
-export function renderizarListadoGestion() {
-    const contenedor = document.getElementById("lista-intercambios");
-    if (!contenedor) return;
+async function actualizarInterfaz() {
+    const tablaCuerpo = document.getElementById("tabla-intercambios-cuerpo");
+    if (!tablaCuerpo) return;
 
-    // Limpiamos el contenedor para evitar duplicados al actualizar el listado
-    contenedor.innerHTML = "";
+    // Vaciamos el cuerpo de la tabla para evitar duplicaciones físicas en pantalla
+    tablaCuerpo.innerHTML = "";
 
-    intercambios.forEach(function(intercambio) {
-        // Buscamos el objeto del usuario que publica el intercambio para obtener su nombre
-        const usuario = usuarios.find(u => u.id === intercambio.usuarioId);
-        const nombreUsuario = usuario ? usuario.nombre : "Desconocido";
+    let listaIntercambios = [];
+    try {
+        // Operación asíncrona para obtener los registros desde IndexedDB
+        listaIntercambios = await obtenerIntercambios();
+    } catch (error) {
+        console.error("Error al recuperar los intercambios de la base de datos:", error);
+    }
 
-        // Diferenciar visualmente: Oferta (Azul) / Petición (Verde) usando tus clases CSS
-        const tipoTarjeta = intercambio.tipo === "oferta" ? "tarjeta-oferta" : "tarjeta-peticion";
-        const nombreTipo = intercambio.tipo === "oferta" ? "Oferta" : "Petición";
+    // Inicializadores de control para el balance estadístico del Canvas
+    let conteoOfrezco = 0;
+    let conteoBusco = 0;
 
-        // Formateamos la fecha a Día/Mes/Año para la visualización en pantalla
-        const partesFecha = intercambio.fecha.split("-");
-        const fechaFormateada = partesFecha.length === 3 
-            ? `${partesFecha[2]}/${partesFecha[1]}/${partesFecha[0]}` 
-            : intercambio.fecha;
+    listaIntercambios.forEach(intercambio => {
+        // Conteo basado en las cadenas validadas en almacenaje.js
+        if (intercambio.tipo === "Ofrezco idioma") conteoOfrezco++;
+        if (intercambio.tipo === "Busco idioma") conteoBusco++;
 
+        // Adaptamos el formato de fecha para la presentación (DD/MM/YYYY)
+        const partes = intercambio.fecha.split("-");
+        const fechaFormateada = partes.length === 3 ? `${partes[2]}/${partes[1]}/${partes[0]}` : intercambio.fecha;
 
-        // Estructura responsive (Bootstrap col-12 col-md-6)
-        const columna = document.createElement("div");
-        columna.className = "col-12 col-md-6";
-
-        // Creamos la estructura HTML idéntica al mockup incorporando la opción de eliminar
-        columna.innerHTML = `
-            <div class="tarjeta-intercambio ${tipoTarjeta} h-100">
-                <p><strong>Título:</strong> ${intercambio.titulo}</p>
-                <p><strong>Usuario:</strong> ${nombreUsuario}</p>
-                <p><strong>Fecha:</strong> ${fechaFormateada}</p>
-                <p><strong>Modalidad:</strong> ${intercambio.modalidad}</p>
-                <p><strong>Tipo:</strong> ${nombreTipo}</p>
-                <p><strong>Descripción:</strong> ${intercambio.descripcion}</p>
-                <button class="boton-borrar mt-2" onclick="darDeBajaIntercambio(${intercambio.id})">Borrar</button>
-            </div>
+        // Inyección técnica de filas en la tabla
+        const fila = document.createElement("tr");
+        fila.innerHTML = `
+            <td class="fw-semibold">${intercambio.titulo}</td>
+            <td><a href="mailto:${intercambio.email}" class="text-secondary text-decoration-none">${intercambio.email}</a></td>
+            <td><small class="text-muted">${fechaFormateada}</small></td>
+            <td><p class="mb-0 text-truncate" style="max-width: 150px;">${intercambio.descripcion}</p></td>
+            <td>
+                <span class="badge ${intercambio.tipo === 'Ofrezco idioma' ? 'bg-primary' : 'bg-success'}">
+                    ${intercambio.tipo}
+                </span>
+            </td>
+            <td class="text-center">
+                <button class="btn btn-danger btn-sm px-2 btn-eliminar" data-id="${intercambio.id}">Borrar</button>
+            </td>
         `;
-
-        contenedor.appendChild(columna);
+        tablaCuerpo.appendChild(fila);
     });
+
+    // Delegación y asignación de listeners a los botones de eliminación generados
+    document.querySelectorAll(".btn-eliminar").forEach(boton => {
+        boton.addEventListener("click", async (e) => {
+            const idStr = e.target.getAttribute("data-id");
+            // Conversión explícita a entero debido a que la keyPath autoincremental es numérica
+            const idNum = parseInt(idStr, 10);
+            
+            try {
+                // Invocación asíncrona al motor de borrado de IndexedDB
+                await eliminarIntercambio(idNum);
+                // Refrescamos la vista de forma reactiva tras completar la transacción
+                actualizarInterfaz();
+            } catch (error) {
+                console.error("Error al ejecutar la baja en IndexedDB:", error);
+            }
+        });
+    });
+
+    // Redibujamos las barras del gráfico Canvas pasándole los totales actualizados
+    renderizarGraficoCanvas(conteoOfrezco, conteoBusco);
 }
 
 // ========================================================
-// 2. FORMULARIO PARA DAR DE ALTA UN NUEVO INTERCAMBIO
+// 2. GENERACIÓN DEL GRÁFICO ESTADÍSTICO (CANVAS API)
 // ========================================================
-export function darDeAltaIntercambio(event) {
-    event.preventDefault(); // Utilizar listeners para gestionar eventos evitando recarga
+function renderizarGraficoCanvas(ofrezco, busco) {
+    const canvas = document.getElementById("grafico-intercambios");
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
 
-    // Recoger los valores introducidos en el formulario
-    const tipoSeleccionado = document.getElementById('select-tipo').value;
-    const tituloIntroducido = document.getElementById('input-titulo').value;
-    const fechaIntroducida = document.getElementById('input-fecha').value;
-    const modalidadIntroducida = document.getElementById('input-modalidad').value;
-    const descripcionIntroducida = document.getElementById('textarea-descripcion').value;
+    // Reseteamos el lienzo para evitar solapamientos gráficos
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    // Crear un objeto JavaScript para el nuevo intercambio con la estructura acordada
+    const lineaBaseY = 130; 
+    const anchoBarra = 35;
+    
+    // Multiplicador de escala proporcional para dar presencia física a los rectángulos
+    const factorEscala = 25; 
+    const altoOfrezco = ofrezco * factorEscala;
+    const altoBusco = busco * factorEscala;
+
+    // Barra 1: Ofrezco idioma (Azul)
+    ctx.fillStyle = "#0d6efd";
+    ctx.fillRect(40, lineaBaseY - altoOfrezco, anchoBarra, altoOfrezco);
+    ctx.fillStyle = "#212529";
+    ctx.font = "bold 11px system-ui";
+    ctx.fillText(`Ofrezco (${ofrezco})`, 25, lineaBaseY + 18);
+
+    // Barra 2: Busco idioma (Verde)
+    ctx.fillStyle = "#198754";
+    ctx.fillRect(140, lineaBaseY - altoBusco, anchoBarra, altoBusco);
+    ctx.fillStyle = "#212529";
+    ctx.font = "bold 11px system-ui";
+    ctx.fillText(`Busco (${busco})`, 130, lineaBaseY + 18);
+}
+
+// ========================================================
+// 3. CAPTURA Y ALTA DE REGISTROS EN INDEXEDDB
+// ========================================================
+async function ejecutarAlta(event) {
+    event.preventDefault(); // Detiene la recarga síncrona de la página del navegador
+
+    // Estructuración del objeto literal interceptando los inputs del DOM
     const nuevoIntercambio = {
-        id: intercambios.length > 0 ? Math.max(...intercambios.map(i => i.id)) + 1 : 1, // ID Autoincremental
-        tipo: tipoSeleccionado,
-        titulo: tituloIntroducido,
-        idiomaOfrecido: tipoSeleccionado === "oferta" ? "Inglés" : "Español", // Campos descriptivos del intercambio
-        idiomaSolicitado: tipoSeleccionado === "oferta" ? "Español" : "Inglés",
-        modalidad: modalidadIntroducida,
-        usuarioId: 1, // Simulamos de forma estática que somos el usuario logueado María (ID 1)
-        fecha: fechaIntroducida,
-        descripcion: descripcionIntroducida
+        titulo: document.getElementById("input-titulo").value.trim(),
+        email: document.getElementById("input-email").value.trim(),
+        fecha: document.getElementById("input-fecha").value,
+        descripcion: document.getElementById("textarea-descripcion").value.trim(),
+        tipo: document.getElementById("select-tipo").value // Carga "Ofrezco idioma" o "Busco idioma"
     };
 
-    // Añadirlo al array correspondiente (.push)
-    intercambios.push(nuevoIntercambio);
-
-    // Actualizar el listado después de añadirlo
-    renderizarListadoGestion();
-
-    // Limpiamos el formulario usando JavaScript puro nativo
-    document.getElementById('mi-formulario').reset();
-}
-
-// ========================================================
-// 3. OPCIÓN PARA ELIMINAR / DAR DE BAJA CADA INTERCAMBIO
-// ========================================================
-export function darDeBajaIntercambio(idAEliminar) {
-    // Eliminar el intercambio correspondiente del array buscando su posición
-    const indice = intercambios.findIndex(i => i.id === idAEliminar);
-
-    if (indice !== -1) {
-        intercambios.splice(indice, 1);
+    try {
+        // Transacción asíncrona de guardado controlado en IndexedDB
+        await guardarIntercambio(nuevoIntercambio);
         
-        // Actualizar el listado después de eliminarlo para reflejar los cambios
-        renderizarListadoGestion();
+        // Reseteamos las cajas del formulario y actualizamos los listados
+        document.getElementById("form-intercambio").reset();
+        actualizarInterfaz();
+    } catch (error) {
+        alert("Fallo en la inserción: " + error.message);
     }
 }
 
 // ========================================================
-// 4. MANTENER SEPARADO EL CÓDIGO JAVASCRIPT DEL HTML
+// 4. INICIALIZACIÓN DE COMPONENTES (ESCUCHADORES)
 // ========================================================
+document.addEventListener("DOMContentLoaded", () => {
+    // Primera renderización analizando el estado síncrono de IndexedDB
+    actualizarInterfaz();
 
-// Exponemos la función a la ventana global para que el evento inline 'onclick' de las tarjetas funcione
-window.darDeBajaIntercambio = darDeBajaIntercambio;
-
-// Listener para inicializar la aplicación una vez cargado el HTML5 completo
-document.addEventListener('DOMContentLoaded', () => {
-    // Ejecutamos nuestro renderizador específico de gestión
-    renderizarListadoGestion();
-
-    // Listener para capturar el submit del formulario de la izquierda
-    const formulario = document.getElementById('mi-formulario');
+    // Vinculamos el listener de control al submit del formulario
+    const formulario = document.getElementById("form-intercambio");
     if (formulario) {
-        formulario.addEventListener('submit', darDeAltaIntercambio);
+        formulario.addEventListener("submit", ejecutarAlta);
+    }
+
+    // Comprobación dinámica de sesión del usuario a través del módulo central
+    const usuarioActivoContenedor = document.getElementById("usuarioActivo");
+    if (usuarioActivoContenedor) {
+        const usuarioLogueado = obtenerUsuarioActivo();
+        // Muestra el correo electrónico si existe una sesión activa en localStorage
+        usuarioActivoContenedor.textContent = usuarioLogueado ? usuarioLogueado.email : "-no login-";
     }
 });
