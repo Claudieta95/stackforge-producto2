@@ -1,45 +1,48 @@
-import { usuarios } from "./datos.js";
+import {
+    loguearUsuario,
+    obtenerUsuarioActivo,
+    cerrarSesion
+} from "./almacenaje.js";
 
-// Elementos del formulario
+// Elementos de la página
 const formulario = document.getElementById("formulario-login");
 const mensaje = document.getElementById("mensaje-login");
-const enlaceLogin = document.getElementById("enlace-login");
+const usuarioActivo = document.getElementById("usuarioActivo");
 const botonCerrar = document.getElementById("cerrar-sesion");
 
-// Mostrar el correo si hay una sesión iniciada
+// Mostrar el usuario que ha iniciado sesión
 function mostrarSesion() {
-    const emailGuardado = sessionStorage.getItem("usuarioEmail");
+    const usuario = obtenerUsuarioActivo();
 
-    if (emailGuardado) {
-        enlaceLogin.textContent = emailGuardado;
+    if (usuario) {
+        usuarioActivo.textContent = usuario.nombre;
         botonCerrar.hidden = false;
     } else {
-        enlaceLogin.textContent = "Iniciar sesión";
+        usuarioActivo.textContent = "-no login-";
         botonCerrar.hidden = true;
     }
 }
 
-mostrarSesion();
-
-// Comprobar el correo y la contraseña
+// Comprobar los datos del formulario
 formulario.addEventListener("submit", function(evento) {
     evento.preventDefault();
 
     const email = document.getElementById("email").value.trim();
     const password = document.getElementById("password").value;
 
-    const usuario = usuarios.find(function(u) {
-        return u.email === email && u.password === password;
-    });
+    if (!email || !password) {
+        mensaje.textContent = "Introduce el correo y la contraseña.";
+        mensaje.className = "mt-3 text-danger";
+        return;
+    }
+
+    const usuario = loguearUsuario(email, password);
 
     if (usuario) {
-        sessionStorage.setItem("usuarioEmail", usuario.email);
-
         mensaje.textContent = "Inicio de sesión correcto.";
         mensaje.className = "mt-3 text-success";
+        formulario.reset();
     } else {
-        sessionStorage.removeItem("usuarioEmail");
-
         mensaje.textContent = "Correo electrónico o contraseña incorrectos.";
         mensaje.className = "mt-3 text-danger";
     }
@@ -47,12 +50,15 @@ formulario.addEventListener("submit", function(evento) {
     mostrarSesion();
 });
 
-// Cerrar sesión
+// Cerrar la sesión
 botonCerrar.addEventListener("click", function() {
-    sessionStorage.removeItem("usuarioEmail");
+    cerrarSesion();
 
     formulario.reset();
     mensaje.textContent = "";
 
     mostrarSesion();
 });
+
+// Comprobar si ya había una sesión iniciada
+mostrarSesion();
