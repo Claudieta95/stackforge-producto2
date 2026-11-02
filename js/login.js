@@ -1,4 +1,5 @@
 import {
+    inicializarUsuariosEjemplo,
     loguearUsuario,
     obtenerUsuarioActivo,
     cerrarSesion
@@ -60,5 +61,6 @@ botonCerrar.addEventListener("click", function() {
     mostrarSesion();
 });
 
-// Comprobar si ya había una sesión iniciada
+// Inicializar usuarios de ejemplo y comprobar la sesión
+inicializarUsuariosEjemplo();
 mostrarSesion();

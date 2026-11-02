@@ -5,6 +5,40 @@
 const CLAVE_USUARIOS = "stackforge_usuarios";
 const CLAVE_USUARIO_ACTIVO = "usuarioEmail";
 
+// Inicialización de usuarios de demostración
+
+const CLAVE_USUARIOS_INICIALIZADOS = "stackforge_usuarios_inicializados";
+
+export function inicializarUsuariosEjemplo() {
+    if (localStorage.getItem(CLAVE_USUARIOS_INICIALIZADOS) === "true") {
+        return;
+    }
+
+    const usuarios = obtenerUsuarios();
+
+    if (usuarios.length === 0) {
+        const usuariosEjemplo = [
+            {
+                nombre: "María",
+                email: "maria@email.com",
+                password: "1234"
+            },
+            {
+                nombre: "Laura",
+                email: "laura@email.com",
+                password: "1234"
+            }
+        ];
+
+        localStorage.setItem(
+            CLAVE_USUARIOS,
+            JSON.stringify(usuariosEjemplo)
+        );
+    }
+
+    localStorage.setItem(CLAVE_USUARIOS_INICIALIZADOS, "true");
+}
+
 export function obtenerUsuarios() {
     const datos = localStorage.getItem(CLAVE_USUARIOS);
 
@@ -180,6 +214,60 @@ async function ejecutarOperacion(tabla, modo, operacion) {
     });
 }
 
+// Inicialización de intercambios de demostración
+
+const CLAVE_INTERCAMBIOS_INICIALIZADOS = "stackforge_intercambios_inicializados";
+
+export async function inicializarIntercambiosEjemplo() {
+    if (localStorage.getItem(CLAVE_INTERCAMBIOS_INICIALIZADOS) === "true") {
+        return;
+    }
+
+    const db = await abrirBaseDatos();
+
+    return new Promise((resolve, reject) => {
+        const transaccion = db.transaction(TABLA_INTERCAMBIOS, "readwrite");
+        const almacen = transaccion.objectStore(TABLA_INTERCAMBIOS);
+
+        const solicitud = almacen.count();
+
+        solicitud.onsuccess = () => {
+            if (solicitud.result === 0) {
+                almacen.add({
+                    titulo: "Intercambio de español por inglés",
+                    email: "maria@email.com",
+                    fecha: "2026-10-14",
+                    descripcion: "Ofrezco practicar español a cambio de inglés.",
+                    tipo: "Ofrezco idioma"
+                });
+
+                almacen.add({
+                    titulo: "Intercambio de francés por español",
+                    email: "laura@email.com",
+                    fecha: "2026-10-14",
+                    descripcion: "Busco a alguien con quien practicar español y puedo ayudarle con francés.",
+                    tipo: "Busco idioma"
+                });
+            }
+        };
+
+        transaccion.oncomplete = () => {
+            db.close();
+            localStorage.setItem(CLAVE_INTERCAMBIOS_INICIALIZADOS, "true");
+            resolve();
+        };
+
+        transaccion.onerror = () => {
+            db.close();
+            reject(transaccion.error);
+        };
+
+        transaccion.onabort = () => {
+            db.close();
+            reject(transaccion.error);
+        };
+    });
+}
 
 // Gestión de intercambios con IndexedDB
 

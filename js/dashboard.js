@@ -1,6 +1,7 @@
 "use strict";
 
 import {
+    inicializarIntercambiosEjemplo,
     obtenerIntercambios,
     obtenerSelecciones,
     guardarSeleccion,
@@ -146,6 +147,9 @@ async function iniciarDashboard() {
     prepararZona(seleccionados, true);
 
     try {
+        // Inicializar intercambios de demostración
+        await inicializarIntercambiosEjemplo();
+
         intercambios = await obtenerIntercambios();
 
         const datosGuardados = await obtenerSelecciones();
