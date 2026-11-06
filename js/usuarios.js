@@ -1,4 +1,5 @@
 import {
+    inicializarUsuariosEjemplo,
     obtenerUsuarios,
     guardarUsuario,
     eliminarUsuario,
@@ -92,6 +93,8 @@ function mostrarUsuarios() {
         mensajeUsuario.className = `alert alert-${tipo}`;
     }
 
+    // Inicializar usuarios de demostración
+    inicializarUsuariosEjemplo();
     mostrarUsuarios();
     mostrarUsuarioActivo();
 

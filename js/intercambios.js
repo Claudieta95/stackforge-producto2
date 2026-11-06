@@ -1,5 +1,5 @@
 // Importamos los métodos del módulo centralizado del Producto 2 de tu equipo
-import { guardarIntercambio, obtenerIntercambios, eliminarIntercambio, obtenerUsuarioActivo } from "./almacenaje.js";
+import { inicializarIntercambiosEjemplo, guardarIntercambio, obtenerIntercambios, eliminarIntercambio, obtenerUsuarioActivo } from "./almacenaje.js";
 
 // ========================================================
 // 1. CONSULTA Y RENDERIZACIÓN DINÁMICA DE LA TABLA
@@ -137,8 +137,15 @@ async function ejecutarAlta(event) {
 // ========================================================
 // 4. INICIALIZACIÓN DE COMPONENTES (ESCUCHADORES)
 // ========================================================
-document.addEventListener("DOMContentLoaded", () => {
-    // Primera renderización analizando el estado síncrono de IndexedDB
+document.addEventListener("DOMContentLoaded", async () => {
+    // Inicializar intercambios de demostración antes de mostrar la tabla
+    try {
+        await inicializarIntercambiosEjemplo();
+    } catch (error) {
+        console.error("Error al inicializar los intercambios de demostración:", error);
+    }
+
+    // Primera renderización de los intercambios
     actualizarInterfaz();
 
     // Vinculamos el listener de control al submit del formulario
